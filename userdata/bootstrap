@@ -1,0 +1,18 @@
+#!/bin/bash
+yum update -y
+/usr/libexec/oci-growfs --yes
+yum install git podman python3-pip -y
+su - opc -c 'git clone https://github.com/lukevella/rallly-selfhosted.git'
+cat >/home/opc/rallly-selfhosted/config.env <<END_CONFIG
+SECRET_PASSWORD=uY7zc9WtRTWY7XQvVe32D0o1m33MlpXWeh/oLQLU5H8=
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+ALLOWED_EMAILS="gerhard.poul@oracle.com"
+SUPPORT_EMAIL="hello@blahblah.com"
+SMTP_SECURE="true"
+END_CONFIG
+# In config.env set SECRET_PASSWORD to `openssl rand -base64 32`
+# In config.env set ALLOWED_EMAILS (*@oracle.com) or similar
+su - opc -c 'pip3 install podman-compose'
+su - opc -c 'podman pull docker.io/library/postgres:14.2'
+su - opc -c 'podman pull docker.io/lukevella/rallly:latest'
+su - opc -c 'cd rallly-selfhosted && podman compose up -d'
