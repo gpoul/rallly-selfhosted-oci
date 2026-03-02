@@ -2,17 +2,35 @@
 yum update -y
 /usr/libexec/oci-growfs --yes
 yum install git podman python3-pip -y
+dnf install dnf-plugins-core
+dnf copr enable @caddy/caddy -y
+dnf install caddy -y
+cat >/etc/caddy/Caddyfile <<END_CADDYFILE
+${fqdn} {
+  reverse_proxy http://localhost:3000
+}
+END_CADDYFILE
 su - opc -c 'git clone https://github.com/lukevella/rallly-selfhosted.git'
 cat >/home/opc/rallly-selfhosted/config.env <<END_CONFIG
-SECRET_PASSWORD=uY7zc9WtRTWY7XQvVe32D0o1m33MlpXWeh/oLQLU5H8=
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
-ALLOWED_EMAILS="gerhard.poul@oracle.com"
-SUPPORT_EMAIL="hello@blahblah.com"
+NEXT_PUBLIC_BASE_URL=https://${fqdn}
+ALLOWED_EMAILS=gerhard.poul@oracle.com
+SUPPORT_EMAIL=hello@${fqdn}
+NOREPLY_EMAIL=noreply@${fqdn}
 SMTP_SECURE="true"
+SMTP_HOST=smtp.email.eu-frankfurt-1.oci.oraclecloud.com
+SMTP_PORT=587
+SMTP_USER=${smtp_user}
+SMTP_PWD=${smtp_password}
 END_CONFIG
-# In config.env set SECRET_PASSWORD to `openssl rand -base64 32`
+SECRET_PASSWORD=`openssl rand -base64 32`
+echo SECRET_PASSWORD=$SECRET_PASSWORD >>/home/opc/rallly-selfhosted/config.env
 # In config.env set ALLOWED_EMAILS (*@oracle.com) or similar
 su - opc -c 'pip3 install podman-compose'
 su - opc -c 'podman pull docker.io/library/postgres:14.2'
 su - opc -c 'podman pull docker.io/lukevella/rallly:latest'
 su - opc -c 'cd rallly-selfhosted && podman compose up -d'
+firewall-cmd --permanent --add-service=http
+firewall-cmd --permanent --add-service=https
+firewall-cmd --reload
+systemctl start caddy
+systemctl enable caddy

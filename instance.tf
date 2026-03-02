@@ -3,6 +3,18 @@ data "oci_identity_availability_domain" "ad" {
   ad_number      = 2
 }
 
+variable rallly_smtp_credential_username {
+}
+variable rallly_smtp_credential_password {
+}
+
+resource "random_pet" "server" {
+  keepers = {
+    #user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_password = oci_identity_smtp_credential.rallly_smtp_credential.password, smtp_user = oci_identity_smtp_credential.rallly_smtp_credential.username } ))
+    user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_password = var.rallly_smtp_credential_password, smtp_user = var.rallly_smtp_credential_username } ))
+  }
+}
+
 variable "flex_instance_image_ocid" {
   type = map(string)
   default = {
@@ -13,7 +25,7 @@ variable "flex_instance_image_ocid" {
 resource "oci_core_instance" "test_instance" {
   availability_domain        = data.oci_identity_availability_domain.ad.name
   compartment_id             = var.compartment_ocid
-  display_name               = "TestInstance"
+  display_name               = "rallly-${random_pet.server.id}"
   shape                      = var.instance_shape
 
   shape_config {
@@ -28,6 +40,7 @@ resource "oci_core_instance" "test_instance" {
     assign_private_dns_record = true
     hostname_label            = "exampleinstance"
     //subnet_cidr          = "10.1.20.0/24"
+    nsg_ids                   = [oci_core_network_security_group.web-sg.id]
   }
 
   source_details {
@@ -43,7 +56,7 @@ resource "oci_core_instance" "test_instance" {
 
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
-    user_data           = base64encode(file("./userdata/bootstrap"))
+    user_data           = random_pet.server.keepers.user_data
   }
 
   timeouts {
@@ -87,6 +100,45 @@ resource "oci_core_subnet" "test_subnet" {
   route_table_id      = oci_core_vcn.test_vcn.default_route_table_id
   dhcp_options_id     = oci_core_vcn.test_vcn.default_dhcp_options_id
 }
+
+resource "oci_core_network_security_group" "web-sg" {
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.test_vcn.id
+  display_name   = "Web Server Security Group"
+}
+
+resource "oci_core_network_security_group_security_rule" "https" {
+  network_security_group_id = oci_core_network_security_group.web-sg.id
+
+  description = "HTTPS"
+  direction   = "INGRESS"
+  protocol    = 6
+  source_type = "CIDR_BLOCK"
+  source      = "0.0.0.0/0"
+  tcp_options {
+    destination_port_range {
+      min = 443
+      max = 443
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "http" {
+  network_security_group_id = oci_core_network_security_group.web-sg.id
+
+  description = "HTTP"
+  direction   = "INGRESS"
+  protocol    = 6
+  source_type = "CIDR_BLOCK"
+  source      = "0.0.0.0/0"
+  tcp_options {
+    destination_port_range {
+      min = 80
+      max = 80
+    }
+  }
+}
+
 
 output "public_ip" {
   value = oci_core_instance.test_instance.public_ip
