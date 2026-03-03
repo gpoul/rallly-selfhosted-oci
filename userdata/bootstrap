@@ -16,9 +16,9 @@ NEXT_PUBLIC_BASE_URL=https://${fqdn}
 ALLOWED_EMAILS=gerhard.poul@oracle.com
 SUPPORT_EMAIL=hello@${fqdn}
 NOREPLY_EMAIL=noreply@${fqdn}
-SMTP_SECURE="true"
+SMTP_SECURE=true
 SMTP_HOST=smtp.email.eu-frankfurt-1.oci.oraclecloud.com
-SMTP_PORT=587
+SMTP_PORT=465
 SMTP_USER=${smtp_user}
 SMTP_PWD=${smtp_password}
 END_CONFIG

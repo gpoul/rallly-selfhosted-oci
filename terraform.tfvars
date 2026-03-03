@@ -6,4 +6,5 @@ compartment_ocid = "ocid1.compartment.oc1..aaaaaaaayqd3n2lkibduy7qarxvnyk6cznsux
 region = "eu-frankfurt-1"
 fqdn = "rallly.147160.xyz"
 rallly_smtp_credential_username = "<username>"
+# If the SMTP credential includes a $ make sure to escape it \$ - totally docker compose's fault (env-file)
 rallly_smtp_credential_password = "<password>"
