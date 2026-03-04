@@ -15,6 +15,9 @@ resource "random_pet" "server" {
   }
 }
 
+resource "random_uuid7" "unique-id" {
+}
+
 variable "flex_instance_image_ocid" {
   type = map(string)
   default = {
@@ -57,6 +60,7 @@ resource "oci_core_instance" "test_instance" {
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
     user_data           = random_pet.server.keepers.user_data
+    unique-id           = random_uuid7.unique-id.result
   }
 
   timeouts {
