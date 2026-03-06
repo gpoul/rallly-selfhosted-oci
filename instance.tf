@@ -5,7 +5,7 @@ data "oci_identity_availability_domain" "ad" {
 
 variable rallly_smtp_credential_username {
 }
-variable rallly_smtp_credential_password {
+variable rallly_smtp_credential_secret_ocid {
 }
 
 resource "random_pet" "server" {
@@ -23,6 +23,24 @@ variable "flex_instance_image_ocid" {
   default = {
     eu-frankfurt-1 = "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaanri6q2ifldmautmdge26ruuqxkuvq7yctv24cwktotpg7tknur2q"
   }
+}
+
+data "oci_identity_domain" "identity_domain" {
+    domain_id = "ocid1.domain.oc1..aaaaaaaazyf5gvxbczergtqlsa4l2jxo6px7vbn3gdsutgsda34wduyitj5a"
+}
+
+resource "oci_identity_domains_dynamic_resource_group" "rallly_dynamic_group" {
+    idcs_endpoint = data.oci_identity_domain.identity_domain.url
+    matching_rule = "instance.id=${oci_core_instance.test_instance.id}"
+    display_name = "rallly-dynamic-group"
+    schemas = ["urn:ietf:params:scim:schemas:oracle:idcs:DynamicResourceGroup"]
+}
+
+resource "oci_identity_policy" "rallly_policy" {
+    compartment_id = var.compartment_ocid
+    description = "rallly-policy"
+    name = "rallly-policy"
+    statements = [ "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.compartment_ocid} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'" ]
 }
 
 resource "oci_core_instance" "test_instance" {

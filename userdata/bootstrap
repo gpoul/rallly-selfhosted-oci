@@ -1,7 +1,9 @@
 #!/bin/bash
+set -euxo pipefail
 yum update -y
 /usr/libexec/oci-growfs --yes
-yum install git podman python3-pip -y
+dnf config-manager --enable ol10_developer
+dnf install git podman python3-pip python-oci-cli -y
 dnf install dnf-plugins-core
 dnf copr enable @caddy/caddy -y
 dnf install caddy -y
@@ -20,10 +22,15 @@ SMTP_SECURE=true
 SMTP_HOST=smtp.email.eu-frankfurt-1.oci.oraclecloud.com
 SMTP_PORT=465
 SMTP_USER=${smtp_user}
-SMTP_PWD=${smtp_password}
 END_CONFIG
 SECRET_PASSWORD=`openssl rand -base64 32`
 echo SECRET_PASSWORD=$SECRET_PASSWORD >>/home/opc/rallly-selfhosted/config.env
+SMTP_PWD=`oci secrets secret-bundle get \
+    --raw-output \
+    --auth instance_principal \
+    --secret-id ${smtp_password_secret_ocid} \
+    --query "data.\"secret-bundle-content\".content" | base64 -d`
+echo SMTP_PWD=$SMTP_PWD >>/home/opc/rallly-selfhosted/config.env
 # In config.env set ALLOWED_EMAILS (*@oracle.com) or similar
 su - opc -c 'pip3 install podman-compose'
 su - opc -c 'podman pull docker.io/library/postgres:14.2'
