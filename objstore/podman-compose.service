@@ -1,0 +1,13 @@
+[Unit]
+Description=%i rootless pod (podman-compose)
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/containers/compose/projects/%i.env
+ExecStartPre=-/home/opc/.local/bin/podman-compose --pod-args "--userns keep-id" up --no-start
+ExecStartPre=/usr/bin/podman pod start pod_%i
+ExecStart=/home/opc/.local/bin/podman-compose --pod-args "--userns keep-id" wait
+ExecStop=/usr/bin/podman pod stop pod_%i
+
+[Install]
+WantedBy=default.target

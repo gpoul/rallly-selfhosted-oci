@@ -8,3 +8,4 @@ fqdn = "rallly.147160.xyz"
 rallly_smtp_credential_username = "<username>"
 # If the SMTP credential includes a $ make sure to escape it in the secret \$ - totally docker compose's fault (env-file)
 rallly_smtp_credential_secret_ocid = "<secret_ocid>"
+rallly-container-tag = "4.7.4"

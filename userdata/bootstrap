@@ -1,4 +1,8 @@
 #!/bin/bash
+while ! ping -c 1 -n -w 1 google.com &>/dev/null
+do
+  echo "Waiting for google.com to be pingable"
+done
 set -euxo pipefail
 yum update -y
 /usr/libexec/oci-growfs --yes
@@ -6,13 +10,23 @@ dnf config-manager --enable ol10_developer
 dnf install git podman python3-pip python-oci-cli -y
 dnf install dnf-plugins-core
 dnf copr enable @caddy/caddy -y
+while fuser /usr/lib/sysimage/rpm/.rpm.lock >/dev/null 2>&1; do
+  echo "Waiting for RPM database lock..."
+  sleep 2
+done
 dnf install caddy -y
 cat >/etc/caddy/Caddyfile <<END_CADDYFILE
+{
+  storage file_system /mnt/data/caddy
+}
+
 ${fqdn} {
   reverse_proxy http://localhost:3000
 }
 END_CADDYFILE
-su - opc -c 'git clone https://github.com/lukevella/rallly-selfhosted.git'
+if [ ! -d /home/opc/rallly-selfhosted ]; then
+  su - opc -c 'git clone https://github.com/lukevella/rallly-selfhosted.git'
+fi
 cat >/home/opc/rallly-selfhosted/config.env <<END_CONFIG
 NEXT_PUBLIC_BASE_URL=https://${fqdn}
 ALLOWED_EMAILS=gerhard.poul@oracle.com
@@ -32,12 +46,45 @@ SMTP_PWD=`oci secrets secret-bundle get \
     --query "data.\"secret-bundle-content\".content" | base64 -d`
 echo SMTP_PWD=$SMTP_PWD >>/home/opc/rallly-selfhosted/config.env
 # In config.env set ALLOWED_EMAILS (*@oracle.com) or similar
+oci os object get -bn rallly-deploy-bucket --name "deploy/docker-compose.yml" --file "/home/opc/rallly-selfhosted/docker-compose.yml" -ns orasemeainnovationhub --auth instance_principal
 su - opc -c 'pip3 install podman-compose'
-su - opc -c 'podman pull docker.io/library/postgres:14.2'
-su - opc -c 'podman pull docker.io/lukevella/rallly:latest'
-su - opc -c 'cd rallly-selfhosted && podman compose up -d'
+set +e
+blkid /dev/oracleoci/oraclevdb
+if [ $? -eq 2 ]; then
+  # disk needs formatting before mounting
+  mkfs.xfs /dev/oracleoci/oraclevdb
+fi
+mkdir /mnt/data
+set -e
+echo "/dev/oracleoci/oraclevdb /mnt/data xfs defaults,_netdev,nofail 0 2" >>/etc/fstab
+systemctl daemon-reload && mount -a
+if [ ! -d /mnt/data/psqldata ]; then
+  mkdir /mnt/data/psqldata
+fi
+if [ ! -d /mnt/data/caddy ]; then
+  mkdir /mnt/data/caddy
+fi
+chown opc:opc -R /mnt/data
+chown caddy:caddy -R /mnt/data/caddy
+#su - opc -c 'cd rallly-selfhosted && podman compose --pod-args "--userns keep-id" up -d'
+su - opc -c 'cd rallly-selfhosted && podman compose systemd -a create-unit'
+oci os object get -bn rallly-deploy-bucket --name "deploy/podman-compose.service" --file "/etc/systemd/user/podman-compose@.service" -ns orasemeainnovationhub --auth instance_principal
+su - opc -c 'cd rallly-selfhosted && podman compose systemd -a register'
+su - opc -c 'echo PODMAN_USERNS=keep-id >>~/.config/containers/compose/projects/rallly-selfhosted.env'
+loginctl enable-linger 'opc'
+systemctl start user@$(id -u opc).service
+sudo -u opc XDG_RUNTIME_DIR=/run/user/$(id -u opc) \
+  systemctl --user start 'podman-compose@rallly-selfhosted'
+sudo -u opc XDG_RUNTIME_DIR=/run/user/$(id -u opc) \
+  systemctl --user enable 'podman-compose@rallly-selfhosted'
+sudo -u opc XDG_RUNTIME_DIR=/run/user/$(id -u opc) \
+  systemctl --user status 'podman-compose@rallly-selfhosted'
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
 firewall-cmd --reload
+semanage fcontext -a -t httpd_sys_rw_content_t /mnt/data/caddy
+restorecon -v /mnt/data/caddy
 systemctl start caddy
 systemctl enable caddy
+mkdir -p /etc/systemd/system/caddy.service.d/
+echo "Requires=network-online.target mnt-data.mount" >/etc/systemd/system/caddy.service.d/override.conf

@@ -10,8 +10,7 @@ variable rallly_smtp_credential_secret_ocid {
 
 resource "random_pet" "server" {
   keepers = {
-    #user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_password = oci_identity_smtp_credential.rallly_smtp_credential.password, smtp_user = oci_identity_smtp_credential.rallly_smtp_credential.username } ))
-    user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_password = var.rallly_smtp_credential_password, smtp_user = var.rallly_smtp_credential_username } ))
+    user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_user = var.rallly_smtp_credential_username, smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid } ))
   }
 }
 
@@ -40,7 +39,32 @@ resource "oci_identity_policy" "rallly_policy" {
     compartment_id = var.compartment_ocid
     description = "rallly-policy"
     name = "rallly-policy"
-    statements = [ "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.compartment_ocid} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'" ]
+    statements = [ "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.compartment_ocid} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'",
+        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use instances in compartment id ${var.compartment_ocid}",
+        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use volume-attachments in compartment id ${var.compartment_ocid}",
+        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read buckets in compartment id ${var.compartment_ocid}",
+        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read objects in compartment id ${var.compartment_ocid}" ]
+}
+
+resource "oci_core_volume" "test_volume" {
+    compartment_id = var.compartment_ocid
+    availability_domain = oci_core_instance.test_instance.availability_domain
+    display_name = "data-${oci_core_instance.test_instance.display_name}"
+    size_in_gbs = 50
+    vpus_per_gb = 10
+    lifecycle {
+        # Prevent destruction in production because this will have psqldata on it
+        #prevent_destroy = true
+    }
+}
+
+resource "oci_core_volume_attachment" "test_volume_attachment" {
+    attachment_type = "iscsi"
+    instance_id = oci_core_instance.test_instance.id
+    volume_id = oci_core_volume.test_volume.id
+    device = "/dev/oracleoci/oraclevdb"
+    is_agent_auto_iscsi_login_enabled = true
+    use_chap = true
 }
 
 resource "oci_core_instance" "test_instance" {
@@ -50,8 +74,9 @@ resource "oci_core_instance" "test_instance" {
   shape                      = var.instance_shape
 
   shape_config {
-    ocpus = 1
+    ocpus = 2
     memory_in_gbs = 4
+    #baseline_ocpu_utilization = "BASELINE_1_8"
   }
 
   create_vnic_details {
@@ -74,6 +99,13 @@ resource "oci_core_instance" "test_instance" {
   # Setting this and destroying the instance will result in a boot volume that should be managed outside of this config.
   # When changing this value, make sure to run 'terraform apply' so that it takes effect before the resource is destroyed.
   #preserve_boot_volume = true
+
+  agent_config {
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Block Volume Management"
+    }
+  }
 
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
