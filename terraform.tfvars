@@ -1,5 +1,5 @@
 tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaaa5bukpynuqzpbvwwiomypkyqgqvv42thtgjtbblhxphvnfkxpayq"
-user_ocid = "ocid1.user.oc1..aaaaaaaadodpovo5vjo7slnwp2fmakt2yjcygx2hkp5zvn3fhjig3lx5lmbq"
+current_user_ocid = "ocid1.user.oc1..aaaaaaaadodpovo5vjo7slnwp2fmakt2yjcygx2hkp5zvn3fhjig3lx5lmbq"
 fingerprint = "ea:f0:87:d0:d0:21:2c:cf:81:63:49:ea:1a:fa:29:16"
 private_key_path = "~/.oci/oci_api_key.pem"
 compartment_ocid = "ocid1.compartment.oc1..aaaaaaaayqd3n2lkibduy7qarxvnyk6cznsuxyovacdonz4lcno27sf74qta"

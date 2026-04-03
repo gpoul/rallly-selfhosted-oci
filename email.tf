@@ -11,7 +11,7 @@ resource "oci_email_sender" "test_sender" {
 
 #resource "oci_identity_smtp_credential" "rallly_smtp_credential" {
 #    description = "rallly-smtp"
-#    user_id = var.user_ocid
+#    user_id = var.current_user_ocid
 #}
 
 resource "oci_email_dkim" "test_dkim" {

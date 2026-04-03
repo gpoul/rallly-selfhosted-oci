@@ -1,0 +1,22 @@
+name: 'publish-rallly-stack'
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish_artifact:
+    name: 'Publish Release for Rallly Stack'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - name: 'Package Rallly Stack zip file'
+        run: |
+          cd ${{ github.workspace }}
+          ./build/build.sh
+          gh release upload ${{github.event.release.tag_name}} rallly-stack.zip
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}

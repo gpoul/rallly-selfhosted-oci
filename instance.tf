@@ -24,6 +24,19 @@ variable "flex_instance_image_ocid" {
   }
 }
 
+variable "baseline_ocpu_utilization" {
+  type = string
+  default = "BASELINE_1_1"
+  validation {
+    condition = var.baseline_ocpu_utilization == "BASELINE_1_1" || var.baseline_ocpu_utilization == "BASELINE_1_2" || var.baseline_ocpu_utilization == "BASELINE_1_8"
+    error_message = "The baseline_ocpu_utilization must be BASELINE_1_1, BASELINE_1_2, or BASELINE_1_8"
+  }
+}
+
+variable "ad_name" {
+  default = null
+}
+
 data "oci_identity_domain" "identity_domain" {
     domain_id = "ocid1.domain.oc1..aaaaaaaazyf5gvxbczergtqlsa4l2jxo6px7vbn3gdsutgsda34wduyitj5a"
 }
@@ -68,15 +81,15 @@ resource "oci_core_volume_attachment" "test_volume_attachment" {
 }
 
 resource "oci_core_instance" "test_instance" {
-  availability_domain        = data.oci_identity_availability_domain.ad.name
+  availability_domain        = coalesce(var.ad_name, data.oci_identity_availability_domain.ad.name)
   compartment_id             = var.compartment_ocid
   display_name               = "rallly-${random_pet.server.id}"
-  shape                      = var.instance_shape
+  shape                      = var.instance_shape.instanceShape
 
   shape_config {
-    ocpus = 2
-    memory_in_gbs = 4
-    #baseline_ocpu_utilization = "BASELINE_1_8"
+    ocpus = var.instance_shape.ocpus
+    memory_in_gbs = var.instance_shape.memory
+    baseline_ocpu_utilization = var.baseline_ocpu_utilization
   }
 
   create_vnic_details {
@@ -143,8 +156,8 @@ resource "oci_core_default_route_table" "default_route_table" {
 }
 
 resource "oci_core_subnet" "test_subnet" {
-  availability_domain = data.oci_identity_availability_domain.ad.name
- cidr_block          = "10.1.20.0/24"
+  availability_domain = coalesce(var.ad_name, data.oci_identity_availability_domain.ad.name)
+  cidr_block          = "10.1.20.0/24"
   //ipv4_cidr_blocks          = ["10.1.20.0/24", "10.1.21.0/24"]
   display_name        = "TestSubnet"
   dns_label           = "testsubnet"
@@ -198,3 +211,6 @@ output "public_ip" {
   value = oci_core_instance.test_instance.public_ip
 }
 
+output "ralllyUrl" {
+  value = "https://${var.fqdn}"
+}

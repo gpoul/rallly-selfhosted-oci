@@ -1,0 +1,156 @@
+title: Rallly - Free Group Meeting Scheduling Tool
+description: This stack deploys a Rallly instance
+schemaVersion: 1.1.0
+
+variableGroups:
+  - title: "SMTP Configuration"
+    visible: true
+    variables:
+      - rallly_smtp_credential_username
+      - rallly_smtp_credential_compartment
+      - rallly_smtp_credential_secret_ocid
+  - title: "Application Configuration"
+    visible: true
+    variables:
+      - rallly-container-tag
+      - fqdn
+  - title: "Compute Instance Configuration"
+    visible: true
+    variables:
+      - compartment_ocid
+      - instance_shape
+      - ad_name
+      - baseline_ocpu_utilization
+      - ssh_public_key
+
+variables:
+  rallly_smtp_credential_username:
+    title: SMTP Credential Username
+    visible: true
+    required: true
+    type: string
+
+  rallly_smtp_credential_compartment:
+    title: SMTP Credential Compartment
+    visible: true
+    required: true
+    type: oci:identity:compartment:id
+    default: compartment_ocid
+
+  rallly_smtp_credential_secret_ocid:
+    title: SMTP Credential Secret
+    visible: true
+    required: true
+    type: oci:kms:secret:id
+    dependsOn:
+      compartmentId: rallly_smtp_credential_compartment
+
+  rallly-container-tag:
+    title: Tag of rallly docker container to deploy
+    description: "Look at https://hub.docker.com/r/lukevella/rallly/tags for published versions"
+    required: true
+    default: "4.7.4"
+    type: string
+
+  fqdn:
+    title: FQDN for the rallly instance
+    visible: true
+    pattern: "^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[A-Za-z]{2,}$"
+    required: true
+    type: string
+
+  instance_shape:
+    title: Instance Shape
+    type: oci:core:instanceshapewithflex:name
+    required: true
+    visible: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ad_name:
+    title: Availability Domain
+    type: oci:identity:availabilitydomain:name
+    required: true
+    visible: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  baseline_ocpu_utilization:
+    title: Baseline OCPU Utilization
+    type: enum
+    enum:
+      - BASELINE_1_1
+      - BASELINE_1_2
+      - BASELINE_1_8
+    default: BASELINE_1_1
+    required: true
+
+  compartment_ocid:
+    title: Target Compartment
+    description: The target compartment to provision application compute instances.
+    type: oci:identity:compartment:id
+    required: true
+    visible: true
+
+  ssh_public_key:
+    type: oci:core:ssh:publickey
+    title: "SSH Public Key"
+    description: "Public SSH key to be included in the ~/.ssh/authorized_keys file for the default user on the instance"
+    additionalProps:
+      allowMultiple: false
+    pattern: "((^(ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)(,((ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)*$"
+    default: ""
+    required: true
+    visible: true
+
+  # Hidden variables
+  tenancy_ocid:
+    title: Tenancy ID
+    description: The Oracle Cloud Identifier (OCID) for your tenancy
+    type: string
+    required: true
+    visible: false
+
+  region:
+    title: Region
+    description: The region in which to create all resources
+    type: oci:identity:region:name
+    required: true
+    visible: false
+
+  current_user_ocid:
+    title: User ID
+    description: The Oracle Cloud Identifier (OCID) for the user
+    type: string
+    visible: false
+
+  fingerprint:
+    title: Private Key Fingerprint
+    type: string
+    visible: false
+    default: ""
+
+  private_key_path:
+    title: Private Key Path
+    type: string
+    visible: false
+    default: ""
+
+  flex_instance_image_ocid:
+    title: The Oracle Cloud Identifier (OCID) for the image to build the instance
+    type: string
+    visible: false
+
+outputs:
+  ralllyUrl:
+    type: link
+    title: Rallly URL
+    displayText: Rallly
+    visible: false
+
+  public_ip:
+    type: string
+    title: Public IP
+
+primaryOutputButton: ${ralllyUrl}
+
