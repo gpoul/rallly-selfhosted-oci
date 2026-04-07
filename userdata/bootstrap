@@ -24,9 +24,7 @@ ${fqdn} {
   reverse_proxy http://localhost:3000
 }
 END_CADDYFILE
-if [ ! -d /home/opc/rallly-selfhosted ]; then
-  su - opc -c 'git clone https://github.com/lukevella/rallly-selfhosted.git'
-fi
+install -d -o opc -g opc /home/opc/rallly-selfhosted
 cat >/home/opc/rallly-selfhosted/config.env <<END_CONFIG
 NEXT_PUBLIC_BASE_URL=https://${fqdn}
 %{ if allowed_emails != "" ~}
