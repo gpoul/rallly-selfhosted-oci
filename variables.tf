@@ -5,15 +5,15 @@ variable "current_user_ocid" {
 }
 
 variable "fingerprint" {
-  type = string
+  type     = string
   nullable = true
-  default = null
+  default  = null
 }
 
 variable "private_key_path" {
-  type = string
+  type     = string
   nullable = true
-  default = null
+  default  = null
 }
 
 variable "compartment_ocid" {
@@ -33,10 +33,10 @@ variable "instance_shape" {
 }
 
 variable "baseline_ocpu_utilization" {
-  type = string
+  type    = string
   default = "BASELINE_1_1"
   validation {
-    condition = var.baseline_ocpu_utilization == "BASELINE_1_1" || var.baseline_ocpu_utilization == "BASELINE_1_2" || var.baseline_ocpu_utilization == "BASELINE_1_8"
+    condition     = var.baseline_ocpu_utilization == "BASELINE_1_1" || var.baseline_ocpu_utilization == "BASELINE_1_2" || var.baseline_ocpu_utilization == "BASELINE_1_8"
     error_message = "The baseline_ocpu_utilization must be BASELINE_1_1, BASELINE_1_2, or BASELINE_1_8"
   }
 }
@@ -49,17 +49,17 @@ variable "ssh_public_key" {
   default = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHasHu9ZLFZsmef78hfr7z/BsXJLSxVwSmxVFLScA/vk gpoul@Gerhards-MacBook-Air.local"
 }
 
-variable fqdn {
+variable "fqdn" {
 }
 
-variable identity_domain {
+variable "identity_domain" {
 }
 
-variable rallly_smtp_credential_username {
+variable "rallly_smtp_credential_username" {
 }
 
-variable rallly_smtp_credential_secret_ocid {
+variable "rallly_smtp_credential_secret_ocid" {
 }
 
-variable rallly-container-tag {
+variable "rallly-container-tag" {
 }

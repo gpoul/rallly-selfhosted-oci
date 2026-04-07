@@ -4,7 +4,7 @@ data "oci_identity_availability_domain" "ad" {
 }
 
 data "oci_identity_domain" "identity_domain" {
-    domain_id = var.identity_domain
+  domain_id = var.identity_domain
 }
 
 data "oci_core_images" "oracle_linux_10" {
@@ -29,7 +29,7 @@ locals {
 
 resource "random_pet" "server" {
   keepers = {
-    user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_user = var.rallly_smtp_credential_username, smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid } ))
+    user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_user = var.rallly_smtp_credential_username, smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid }))
   }
 }
 
@@ -37,53 +37,53 @@ resource "random_uuid7" "unique-id" {
 }
 
 resource "oci_identity_domains_dynamic_resource_group" "rallly_dynamic_group" {
-    idcs_endpoint = data.oci_identity_domain.identity_domain.url
-    matching_rule = "instance.id=${oci_core_instance.rallly_instance.id}"
-    display_name = "rallly-dynamic-group"
-    schemas = ["urn:ietf:params:scim:schemas:oracle:idcs:DynamicResourceGroup"]
+  idcs_endpoint = data.oci_identity_domain.identity_domain.url
+  matching_rule = "instance.id=${oci_core_instance.rallly_instance.id}"
+  display_name  = "rallly-dynamic-group"
+  schemas       = ["urn:ietf:params:scim:schemas:oracle:idcs:DynamicResourceGroup"]
 }
 
 resource "oci_identity_policy" "rallly_policy" {
-    compartment_id = var.compartment_ocid
-    description = "rallly-policy"
-    name = "rallly-policy"
-    statements = [ "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.compartment_ocid} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'",
-        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use instances in compartment id ${var.compartment_ocid}",
-        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use volume-attachments in compartment id ${var.compartment_ocid}",
-        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read buckets in compartment id ${var.compartment_ocid}",
-        "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read objects in compartment id ${var.compartment_ocid}" ]
+  compartment_id = var.compartment_ocid
+  description    = "rallly-policy"
+  name           = "rallly-policy"
+  statements = ["Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.compartment_ocid} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'",
+    "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use instances in compartment id ${var.compartment_ocid}",
+    "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use volume-attachments in compartment id ${var.compartment_ocid}",
+    "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read buckets in compartment id ${var.compartment_ocid}",
+  "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read objects in compartment id ${var.compartment_ocid}"]
 }
 
 resource "oci_core_volume" "data_volume" {
-    compartment_id = var.compartment_ocid
-    availability_domain = oci_core_instance.rallly_instance.availability_domain
-    display_name = "data-${oci_core_instance.rallly_instance.display_name}"
-    size_in_gbs = 50
-    vpus_per_gb = 10
-    lifecycle {
-        # Prevent destruction in production because this will have psqldata on it
-        #prevent_destroy = true
-    }
+  compartment_id      = var.compartment_ocid
+  availability_domain = oci_core_instance.rallly_instance.availability_domain
+  display_name        = "data-${oci_core_instance.rallly_instance.display_name}"
+  size_in_gbs         = 50
+  vpus_per_gb         = 10
+  lifecycle {
+    # Prevent destruction in production because this will have psqldata on it
+    #prevent_destroy = true
+  }
 }
 
 resource "oci_core_volume_attachment" "data_volume_attachment" {
-    attachment_type = "iscsi"
-    instance_id = oci_core_instance.rallly_instance.id
-    volume_id = oci_core_volume.data_volume.id
-    device = "/dev/oracleoci/oraclevdb"
-    is_agent_auto_iscsi_login_enabled = true
-    use_chap = true
+  attachment_type                   = "iscsi"
+  instance_id                       = oci_core_instance.rallly_instance.id
+  volume_id                         = oci_core_volume.data_volume.id
+  device                            = "/dev/oracleoci/oraclevdb"
+  is_agent_auto_iscsi_login_enabled = true
+  use_chap                          = true
 }
 
 resource "oci_core_instance" "rallly_instance" {
-  availability_domain        = coalesce(var.ad_name, data.oci_identity_availability_domain.ad.name)
-  compartment_id             = var.compartment_ocid
-  display_name               = "rallly-${random_pet.server.id}"
-  shape                      = var.instance_shape.instanceShape
+  availability_domain = coalesce(var.ad_name, data.oci_identity_availability_domain.ad.name)
+  compartment_id      = var.compartment_ocid
+  display_name        = "rallly-${random_pet.server.id}"
+  shape               = var.instance_shape.instanceShape
 
   shape_config {
-    ocpus = var.instance_shape.ocpus
-    memory_in_gbs = var.instance_shape.memory
+    ocpus                     = var.instance_shape.ocpus
+    memory_in_gbs             = var.instance_shape.memory
     baseline_ocpu_utilization = var.baseline_ocpu_utilization
   }
 
@@ -97,15 +97,15 @@ resource "oci_core_instance" "rallly_instance" {
   }
 
   source_details {
-    source_type = "image"
-    source_id = local.oracle_linux_10_image_id
+    source_type             = "image"
+    source_id               = local.oracle_linux_10_image_id
     boot_volume_size_in_gbs = "60"
   }
 
   agent_config {
     plugins_config {
       desired_state = "ENABLED"
-      name = "Block Volume Management"
+      name          = "Block Volume Management"
     }
   }
 
@@ -148,13 +148,13 @@ resource "oci_core_subnet" "public_subnet" {
   availability_domain = coalesce(var.ad_name, data.oci_identity_availability_domain.ad.name)
   cidr_block          = "10.1.20.0/24"
   //ipv4_cidr_blocks          = ["10.1.20.0/24", "10.1.21.0/24"]
-  display_name        = "RalllyPublicSubnet"
-  dns_label           = "ralllypublicsubnet"
-  security_list_ids   = [oci_core_vcn.rallly_vcn.default_security_list_id]
-  compartment_id      = var.compartment_ocid
-  vcn_id              = oci_core_vcn.rallly_vcn.id
-  route_table_id      = oci_core_vcn.rallly_vcn.default_route_table_id
-  dhcp_options_id     = oci_core_vcn.rallly_vcn.default_dhcp_options_id
+  display_name      = "RalllyPublicSubnet"
+  dns_label         = "ralllypublicsubnet"
+  security_list_ids = [oci_core_vcn.rallly_vcn.default_security_list_id]
+  compartment_id    = var.compartment_ocid
+  vcn_id            = oci_core_vcn.rallly_vcn.id
+  route_table_id    = oci_core_vcn.rallly_vcn.default_route_table_id
+  dhcp_options_id   = oci_core_vcn.rallly_vcn.default_dhcp_options_id
 }
 
 resource "oci_core_network_security_group" "web-sg" {
