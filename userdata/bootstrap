@@ -29,11 +29,13 @@ if [ ! -d /home/opc/rallly-selfhosted ]; then
 fi
 cat >/home/opc/rallly-selfhosted/config.env <<END_CONFIG
 NEXT_PUBLIC_BASE_URL=https://${fqdn}
-ALLOWED_EMAILS=gerhard.poul@oracle.com
+%{ if allowed_emails != "" ~}
+ALLOWED_EMAILS=${allowed_emails}
+%{ endif ~}
 SUPPORT_EMAIL=hello@${fqdn}
 NOREPLY_EMAIL=noreply@${fqdn}
 SMTP_SECURE=true
-SMTP_HOST=smtp.email.eu-frankfurt-1.oci.oraclecloud.com
+SMTP_HOST=${smtp_host}
 SMTP_PORT=465
 SMTP_USER=${smtp_user}
 END_CONFIG
@@ -46,7 +48,7 @@ SMTP_PWD=`oci secrets secret-bundle get \
     --query "data.\"secret-bundle-content\".content" | base64 -d`
 echo SMTP_PWD=$SMTP_PWD >>/home/opc/rallly-selfhosted/config.env
 # In config.env set ALLOWED_EMAILS (*@oracle.com) or similar
-oci os object get -bn rallly-deploy-bucket --name "deploy/docker-compose.yml" --file "/home/opc/rallly-selfhosted/docker-compose.yml" -ns orasemeainnovationhub --auth instance_principal
+oci os object get -bn ${deploy_bucket_name} --name "deploy/docker-compose.yml" --file "/home/opc/rallly-selfhosted/docker-compose.yml" -ns ${objectstorage_namespace} --auth instance_principal
 su - opc -c 'pip3 install podman-compose'
 set +e
 blkid /dev/oracleoci/oraclevdb
@@ -68,7 +70,7 @@ chown opc:opc -R /mnt/data
 chown caddy:caddy -R /mnt/data/caddy
 #su - opc -c 'cd rallly-selfhosted && podman compose --pod-args "--userns keep-id" up -d'
 su - opc -c 'cd rallly-selfhosted && podman compose systemd -a create-unit'
-oci os object get -bn rallly-deploy-bucket --name "deploy/podman-compose.service" --file "/etc/systemd/user/podman-compose@.service" -ns orasemeainnovationhub --auth instance_principal
+oci os object get -bn ${deploy_bucket_name} --name "deploy/podman-compose.service" --file "/etc/systemd/user/podman-compose@.service" -ns ${objectstorage_namespace} --auth instance_principal
 su - opc -c 'cd rallly-selfhosted && podman compose systemd -a register'
 su - opc -c 'echo PODMAN_USERNS=keep-id >>~/.config/containers/compose/projects/rallly-selfhosted.env'
 loginctl enable-linger 'opc'

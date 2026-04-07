@@ -29,7 +29,15 @@ locals {
 
 resource "random_pet" "server" {
   keepers = {
-    user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_user = var.rallly_smtp_credential_username, smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid }))
+    user_data = base64encode(templatefile("./userdata/bootstrap", {
+      allowed_emails            = var.allowed_emails
+      deploy_bucket_name        = oci_objectstorage_bucket.deploy_bucket.name
+      fqdn                      = var.fqdn
+      objectstorage_namespace   = data.oci_objectstorage_namespace.os_namespace.namespace
+      smtp_host                 = "smtp.email.${var.region}.oci.oraclecloud.com"
+      smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid
+      smtp_user                 = var.rallly_smtp_credential_username
+    }))
   }
 }
 
@@ -147,14 +155,13 @@ resource "oci_core_default_route_table" "default_route_table" {
 resource "oci_core_subnet" "public_subnet" {
   availability_domain = coalesce(var.ad_name, data.oci_identity_availability_domain.ad.name)
   cidr_block          = "10.1.20.0/24"
-  //ipv4_cidr_blocks          = ["10.1.20.0/24", "10.1.21.0/24"]
-  display_name      = "RalllyPublicSubnet"
-  dns_label         = "ralllypublicsubnet"
-  security_list_ids = [oci_core_vcn.rallly_vcn.default_security_list_id]
-  compartment_id    = var.compartment_ocid
-  vcn_id            = oci_core_vcn.rallly_vcn.id
-  route_table_id    = oci_core_vcn.rallly_vcn.default_route_table_id
-  dhcp_options_id   = oci_core_vcn.rallly_vcn.default_dhcp_options_id
+  display_name        = "RalllyPublicSubnet"
+  dns_label           = "ralllypublicsubnet"
+  security_list_ids   = [oci_core_vcn.rallly_vcn.default_security_list_id]
+  compartment_id      = var.compartment_ocid
+  vcn_id              = oci_core_vcn.rallly_vcn.id
+  route_table_id      = oci_core_vcn.rallly_vcn.default_route_table_id
+  dhcp_options_id     = oci_core_vcn.rallly_vcn.default_dhcp_options_id
 }
 
 resource "oci_core_network_security_group" "web-sg" {

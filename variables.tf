@@ -61,5 +61,10 @@ variable "rallly_smtp_credential_username" {
 variable "rallly_smtp_credential_secret_ocid" {
 }
 
+variable "allowed_emails" {
+  type    = string
+  default = ""
+}
+
 variable "rallly-container-tag" {
 }

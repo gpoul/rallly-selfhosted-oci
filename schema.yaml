@@ -14,6 +14,7 @@ variableGroups:
     variables:
       - rallly-container-tag
       - fqdn
+      - allowed_emails
   - title: "Compute Instance Configuration"
     visible: true
     variables:
@@ -63,6 +64,14 @@ variables:
     pattern: "^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[A-Za-z]{2,}$"
     required: true
     type: string
+
+  allowed_emails:
+    title: Allowed Emails
+    description: Optional comma separated list of email addresses that are allowed to register and login. Leave blank to allow all.
+    visible: true
+    required: false
+    type: string
+    default: ""
 
   identity_domain_compartment:
     title: Identity Domain Compartment
