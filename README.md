@@ -4,3 +4,10 @@ This repository contains a terraform template to deploy [Rallly](https://rallly.
 
 [![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://console.eu-frankfurt-1.oraclecloud.com/resourcemanager/stacks/create?region=home&zipUrl=https://github.com/gpoul/rallly-selfhosted-oci/releases/latest/download/rallly-stack.zip)
 
+## Prerequisites
+
+- Compartments already created in your tenancy
+- SMTP Credential created and the secret stored in vault
+- Public DNS Zone created for the FQDN that will be used
+- Identity Domain that can be used to create a dynamic group in
+- SSH Public Key

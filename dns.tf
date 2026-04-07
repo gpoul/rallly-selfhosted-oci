@@ -1,7 +1,17 @@
+locals {
+  fqdn_parts = split(".", trimsuffix(var.fqdn, "."))
+  target_zone = "${join(".", slice(local.fqdn_parts, 1, length(local.fqdn_parts)))}."
+}
+
+data "oci_dns_zone" "target_zone" {
+  zone_name_or_id = local.target_zone
+  scope   = "GLOBAL"
+}
+
 resource "oci_dns_rrset" "a-records" {
     domain = var.fqdn
     rtype = "A"
-    zone_name_or_id = "ocid1.dns-zone.oc1..aaaaaaaae4635kax6robbxwflitdkaizhnufoqbjkdj5lm6eujzaw7lh5cxq"
+    zone_name_or_id = data.oci_dns_zone.target_zone.id
 
     items {
         domain = var.fqdn
@@ -14,7 +24,7 @@ resource "oci_dns_rrset" "a-records" {
 resource "oci_dns_rrset" "spf-record" {
     domain = var.fqdn
     rtype = "TXT"
-    zone_name_or_id = "ocid1.dns-zone.oc1..aaaaaaaae4635kax6robbxwflitdkaizhnufoqbjkdj5lm6eujzaw7lh5cxq"
+    zone_name_or_id = data.oci_dns_zone.target_zone.id
 
     items {
         domain = var.fqdn
@@ -27,7 +37,7 @@ resource "oci_dns_rrset" "spf-record" {
 resource "oci_dns_rrset" "cname-dkim-record" {
     domain = oci_email_dkim.rallly_dkim.dns_subdomain_name
     rtype = "CNAME"
-    zone_name_or_id = "ocid1.dns-zone.oc1..aaaaaaaae4635kax6robbxwflitdkaizhnufoqbjkdj5lm6eujzaw7lh5cxq"
+    zone_name_or_id = data.oci_dns_zone.target_zone.id
 
     items {
         domain = oci_email_dkim.rallly_dkim.dns_subdomain_name

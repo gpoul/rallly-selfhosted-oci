@@ -22,6 +22,11 @@ variableGroups:
       - ad_name
       - baseline_ocpu_utilization
       - ssh_public_key
+  - title: "Identity Configuration"
+    visible: true
+    variables:
+      - identity_domain_compartment
+      - identity_domain
 
 variables:
   rallly_smtp_credential_username:
@@ -58,6 +63,21 @@ variables:
     pattern: "^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[A-Za-z]{2,}$"
     required: true
     type: string
+
+  identity_domain_compartment:
+    title: Identity Domain Compartment
+    visible: true
+    required: true
+    type: oci:identity:compartment:id
+    default: tenancy_ocid
+
+  identity_domain:
+    title: Identity Domain for creating dynamic group
+    visible: true
+    required: true
+    type: oci:identity:domains:id
+    dependsOn:
+      compartmentId: identity_domain_compartment
 
   instance_shape:
     title: Instance Shape
@@ -153,4 +173,3 @@ outputs:
     title: Public IP
 
 primaryOutputButton: ${ralllyUrl}
-

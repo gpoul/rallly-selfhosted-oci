@@ -3,6 +3,30 @@ data "oci_identity_availability_domain" "ad" {
   ad_number      = 2
 }
 
+data "oci_identity_domain" "identity_domain" {
+    domain_id = var.identity_domain
+}
+
+data "oci_core_images" "oracle_linux_10" {
+  compartment_id = var.compartment_ocid
+
+  operating_system         = "Oracle Linux"
+  operating_system_version = "10"
+
+  shape = var.instance_shape.instanceShape
+
+  # Only available images
+  state = "AVAILABLE"
+
+  # Sort so newest is first
+  sort_by    = "TIMECREATED"
+  sort_order = "DESC"
+}
+
+locals {
+  oracle_linux_10_image_id = data.oci_core_images.oracle_linux_10.images[0].id
+}
+
 resource "random_pet" "server" {
   keepers = {
     user_data = base64encode(templatefile("./userdata/bootstrap", { fqdn = var.fqdn, smtp_user = var.rallly_smtp_credential_username, smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid } ))
@@ -10,30 +34,6 @@ resource "random_pet" "server" {
 }
 
 resource "random_uuid7" "unique-id" {
-}
-
-variable "flex_instance_image_ocid" {
-  type = map(string)
-  default = {
-    eu-frankfurt-1 = "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaanri6q2ifldmautmdge26ruuqxkuvq7yctv24cwktotpg7tknur2q"
-  }
-}
-
-variable "baseline_ocpu_utilization" {
-  type = string
-  default = "BASELINE_1_1"
-  validation {
-    condition = var.baseline_ocpu_utilization == "BASELINE_1_1" || var.baseline_ocpu_utilization == "BASELINE_1_2" || var.baseline_ocpu_utilization == "BASELINE_1_8"
-    error_message = "The baseline_ocpu_utilization must be BASELINE_1_1, BASELINE_1_2, or BASELINE_1_8"
-  }
-}
-
-variable "ad_name" {
-  default = null
-}
-
-data "oci_identity_domain" "identity_domain" {
-    domain_id = "ocid1.domain.oc1..aaaaaaaazyf5gvxbczergtqlsa4l2jxo6px7vbn3gdsutgsda34wduyitj5a"
 }
 
 resource "oci_identity_domains_dynamic_resource_group" "rallly_dynamic_group" {
@@ -98,7 +98,7 @@ resource "oci_core_instance" "rallly_instance" {
 
   source_details {
     source_type = "image"
-    source_id = var.flex_instance_image_ocid[var.region]
+    source_id = local.oracle_linux_10_image_id
     boot_volume_size_in_gbs = "60"
   }
 
