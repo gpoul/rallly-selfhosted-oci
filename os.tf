@@ -4,7 +4,7 @@ data "oci_objectstorage_namespace" "os_namespace" {
 
 resource "oci_objectstorage_bucket" "deploy_bucket" {
   compartment_id = var.compartment_ocid
-  name           = "rallly-deploy-bucket"
+  name           = "${local.resource_name_prefix}-deploy-bucket"
   namespace      = data.oci_objectstorage_namespace.os_namespace.namespace
 }
 

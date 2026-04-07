@@ -46,7 +46,7 @@ variable "ad_name" {
 }
 
 variable "ssh_public_key" {
-  default = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHasHu9ZLFZsmef78hfr7z/BsXJLSxVwSmxVFLScA/vk gpoul@Gerhards-MacBook-Air.local"
+  default = ""
 }
 
 variable "fqdn" {

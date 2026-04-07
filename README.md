@@ -11,3 +11,9 @@ This repository contains a terraform template to deploy [Rallly](https://rallly.
 - Public DNS Zone created for the FQDN that will be used
 - Identity Domain that can be used to create a dynamic group in
 - SSH Public Key
+
+## Notes
+
+- In OCI Resource Manager, `ad_name` is intentionally required so the availability domain is chosen explicitly in the stack UI.
+- In direct Terraform usage, `ad_name` may be omitted and the configuration falls back to `data.oci_identity_availability_domain.ad`.
+- The SPF DNS record is derived automatically for OCI commercial regions based on `region`.

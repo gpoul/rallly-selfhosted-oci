@@ -1,6 +1,11 @@
 locals {
   fqdn_parts  = split(".", trimsuffix(var.fqdn, "."))
   target_zone = "${join(".", slice(local.fqdn_parts, 1, length(local.fqdn_parts)))}."
+  smtp_spf_include = (
+    startswith(var.region, "ap-")
+    ) ? "ap.rp.oracleemaildelivery.com" : (
+    startswith(var.region, "eu-") || startswith(var.region, "uk-") || startswith(var.region, "me-")
+  ) ? "eu.rp.oracleemaildelivery.com" : "rp.oracleemaildelivery.com"
 }
 
 data "oci_dns_zone" "target_zone" {
@@ -28,7 +33,7 @@ resource "oci_dns_rrset" "spf-record" {
 
   items {
     domain = var.fqdn
-    rdata  = "v=spf1 include:eu.rp.oracleemaildelivery.com ~all"
+    rdata  = "v=spf1 include:${local.smtp_spf_include} ~all"
     rtype  = "TXT"
     ttl    = 60
   }

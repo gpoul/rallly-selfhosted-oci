@@ -165,11 +165,6 @@ variables:
     visible: false
     default: ""
 
-  flex_instance_image_ocid:
-    title: The Oracle Cloud Identifier (OCID) for the image to build the instance
-    type: string
-    visible: false
-
 outputs:
   ralllyUrl:
     type: link

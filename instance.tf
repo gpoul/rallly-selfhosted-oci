@@ -25,6 +25,7 @@ data "oci_core_images" "oracle_linux_10" {
 
 locals {
   oracle_linux_10_image_id = data.oci_core_images.oracle_linux_10.images[0].id
+  resource_name_prefix     = "rallly-${substr(md5(lower(var.fqdn)), 0, 8)}"
 }
 
 resource "random_pet" "server" {
@@ -47,14 +48,14 @@ resource "random_uuid7" "unique-id" {
 resource "oci_identity_domains_dynamic_resource_group" "rallly_dynamic_group" {
   idcs_endpoint = data.oci_identity_domain.identity_domain.url
   matching_rule = "instance.id=${oci_core_instance.rallly_instance.id}"
-  display_name  = "rallly-dynamic-group"
+  display_name  = "${local.resource_name_prefix}-dynamic-group"
   schemas       = ["urn:ietf:params:scim:schemas:oracle:idcs:DynamicResourceGroup"]
 }
 
 resource "oci_identity_policy" "rallly_policy" {
   compartment_id = var.compartment_ocid
-  description    = "rallly-policy"
-  name           = "rallly-policy"
+  description    = "${local.resource_name_prefix}-policy"
+  name           = "${local.resource_name_prefix}-policy"
   statements = ["Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.compartment_ocid} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'",
     "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use instances in compartment id ${var.compartment_ocid}",
     "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use volume-attachments in compartment id ${var.compartment_ocid}",
@@ -70,7 +71,7 @@ resource "oci_core_volume" "data_volume" {
   vpus_per_gb         = 10
   lifecycle {
     # Prevent destruction in production because this will have psqldata on it
-    #prevent_destroy = true
+    prevent_destroy = true
   }
 }
 
@@ -156,7 +157,7 @@ resource "oci_core_subnet" "public_subnet" {
   availability_domain = coalesce(var.ad_name, data.oci_identity_availability_domain.ad.name)
   cidr_block          = "10.1.20.0/24"
   display_name        = "RalllyPublicSubnet"
-  dns_label           = "ralllypublicsubnet"
+  dns_label           = "ralllypublic"
   security_list_ids   = [oci_core_vcn.rallly_vcn.default_security_list_id]
   compartment_id      = var.compartment_ocid
   vcn_id              = oci_core_vcn.rallly_vcn.id

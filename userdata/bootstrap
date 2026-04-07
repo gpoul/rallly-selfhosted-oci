@@ -7,7 +7,7 @@ set -euxo pipefail
 yum update -y
 /usr/libexec/oci-growfs --yes
 dnf config-manager --enable ol10_developer
-dnf install git podman python3-pip python-oci-cli -y
+dnf install podman python3-pip python-oci-cli -y
 dnf install dnf-plugins-core
 dnf copr enable @caddy/caddy -y
 while fuser /usr/lib/sysimage/rpm/.rpm.lock >/dev/null 2>&1; do
