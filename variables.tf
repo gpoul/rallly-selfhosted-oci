@@ -61,6 +61,9 @@ variable "rallly_smtp_credential_username" {
 variable "rallly_smtp_credential_secret_ocid" {
 }
 
+variable "rallly_smtp_credential_compartment" {
+}
+
 variable "allowed_emails" {
   type    = string
   default = ""

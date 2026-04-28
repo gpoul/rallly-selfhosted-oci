@@ -52,12 +52,18 @@ resource "oci_identity_domains_dynamic_resource_group" "rallly_dynamic_group" {
   schemas       = ["urn:ietf:params:scim:schemas:oracle:idcs:DynamicResourceGroup"]
 }
 
+resource "oci_identity_policy" "rallly_smtp_credential_policy" {
+  compartment_id = var.rallly_smtp_credential_compartment
+  description    = "${local.resource_name_prefix}-smtp-policy"
+  name           = "${local.resource_name_prefix}-smtp-policy"
+  statements = ["Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.rallly_smtp_credential_compartment} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'"]
+}
+
 resource "oci_identity_policy" "rallly_policy" {
   compartment_id = var.compartment_ocid
   description    = "${local.resource_name_prefix}-policy"
   name           = "${local.resource_name_prefix}-policy"
-  statements = ["Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read secret-family in compartment id ${var.compartment_ocid} where target.secret.id = '${var.rallly_smtp_credential_secret_ocid}'",
-    "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use instances in compartment id ${var.compartment_ocid}",
+  statements = ["Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use instances in compartment id ${var.compartment_ocid}",
     "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to use volume-attachments in compartment id ${var.compartment_ocid}",
     "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read buckets in compartment id ${var.compartment_ocid}",
   "Allow dynamic-group id ${oci_identity_domains_dynamic_resource_group.rallly_dynamic_group.ocid} to read objects in compartment id ${var.compartment_ocid}"]
