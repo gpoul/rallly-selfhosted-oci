@@ -37,6 +37,7 @@ SMTP_SECURE=true
 SMTP_HOST=${smtp_host}
 SMTP_PORT=465
 SMTP_USER=${smtp_user}
+INITIAL_ADMIN_EMAIL=${initial_admin_email}
 END_CONFIG
 SMTP_PWD=`oci secrets secret-bundle get \
     --raw-output \

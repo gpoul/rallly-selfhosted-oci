@@ -69,5 +69,9 @@ variable "allowed_emails" {
   default = ""
 }
 
+variable "initial_admin_email" {
+  type = string
+}
+
 variable "rallly-container-tag" {
 }

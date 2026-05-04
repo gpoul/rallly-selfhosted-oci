@@ -34,6 +34,7 @@ resource "random_pet" "server" {
       allowed_emails            = var.allowed_emails
       deploy_bucket_name        = oci_objectstorage_bucket.deploy_bucket.name
       fqdn                      = var.fqdn
+      initial_admin_email       = var.initial_admin_email
       objectstorage_namespace   = data.oci_objectstorage_namespace.os_namespace.namespace
       smtp_host                 = "smtp.email.${var.region}.oci.oraclecloud.com"
       smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid
