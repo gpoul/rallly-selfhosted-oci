@@ -7,7 +7,7 @@ set -euxo pipefail
 yum update -y
 /usr/libexec/oci-growfs --yes
 dnf config-manager --enable ol10_developer
-dnf install podman python3-pip python-oci-cli -y
+dnf install podman python3-pip python-oci-cli acl -y
 dnf install dnf-plugins-core
 dnf copr enable @caddy/caddy -y
 while fuser /usr/lib/sysimage/rpm/.rpm.lock >/dev/null 2>&1; do
@@ -67,6 +67,15 @@ if [ ! -d /mnt/data/caddy ]; then
 fi
 chown opc:opc -R /mnt/data
 chown caddy:caddy -R /mnt/data/caddy
+install -d -o opc -g opc -m 0755 /var/log/rallly
+touch /var/log/rallly/rallly.log /var/log/rallly/postgres.log
+chown opc:opc /var/log/rallly/rallly.log /var/log/rallly/postgres.log
+chmod 0644 /var/log/rallly/rallly.log /var/log/rallly/postgres.log
+if id oracle-cloud-agent >/dev/null 2>&1; then
+  setfacl -m u:oracle-cloud-agent:rx /var/log/rallly
+  setfacl -m u:oracle-cloud-agent:r /var/log/rallly/rallly.log /var/log/rallly/postgres.log
+  setfacl -d -m u:oracle-cloud-agent:rx /var/log/rallly
+fi
 #su - opc -c 'cd rallly-selfhosted && podman compose --pod-args "--userns keep-id" up -d'
 su - opc -c 'cd rallly-selfhosted && podman compose systemd -a create-unit'
 oci os object get -bn ${deploy_bucket_name} --name "deploy/podman-compose.service" --file "/etc/systemd/user/podman-compose@.service" -ns ${objectstorage_namespace} --auth instance_principal

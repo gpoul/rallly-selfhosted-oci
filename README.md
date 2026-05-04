@@ -17,3 +17,4 @@ This repository contains a terraform template to deploy [Rallly](https://rallly.
 - In OCI Resource Manager, `ad_name` is intentionally required so the availability domain is chosen explicitly in the stack UI.
 - In direct Terraform usage, `ad_name` may be omitted and the configuration falls back to `data.oci_identity_availability_domain.ad`.
 - The SPF DNS record is derived automatically for OCI commercial regions based on `region`.
+- Rallly and Postgres container logs are written to `/var/log/rallly` on the boot volume and ingested into OCI Logging through the Custom Logs Monitoring plugin.

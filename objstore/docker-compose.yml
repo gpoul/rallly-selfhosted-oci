@@ -2,6 +2,11 @@ services:
   rallly_db:
     image: docker.io/library/postgres:17.9
     restart: always
+    logging:
+      driver: k8s-file
+      options:
+        path: /var/log/rallly/postgres.log
+        max-size: 25mb
     volumes:
       - /mnt/data/psqldata/:/var/lib/postgresql/data:Z
     environment:
@@ -16,6 +21,11 @@ services:
   rallly:
     image: docker.io/lukevella/rallly:${rallly-version}
     restart: always
+    logging:
+      driver: k8s-file
+      options:
+        path: /var/log/rallly/rallly.log
+        max-size: 25mb
     depends_on:
       - rallly_db
     ports:
@@ -24,4 +34,3 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@rallly_db/db
     env_file:
       - config.env
-
