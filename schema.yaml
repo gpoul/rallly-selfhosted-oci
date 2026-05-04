@@ -55,7 +55,7 @@ variables:
     title: Tag of rallly docker container to deploy
     description: "Look at https://hub.docker.com/r/lukevella/rallly/tags for published versions"
     required: true
-    default: "4.7.4"
+    default: "4.9.2"
     type: string
 
   fqdn:

@@ -26,6 +26,7 @@ ${fqdn} {
 END_CADDYFILE
 install -d -o opc -g opc /home/opc/rallly-selfhosted
 cat >/home/opc/rallly-selfhosted/config.env <<END_CONFIG
+# Generated config for tag ${rallly-container-tag} - force regen
 NEXT_PUBLIC_BASE_URL=https://${fqdn}
 %{ if allowed_emails != "" ~}
 ALLOWED_EMAILS=${allowed_emails}

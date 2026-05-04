@@ -38,6 +38,7 @@ resource "random_pet" "server" {
       smtp_host                 = "smtp.email.${var.region}.oci.oraclecloud.com"
       smtp_password_secret_ocid = var.rallly_smtp_credential_secret_ocid
       smtp_user                 = var.rallly_smtp_credential_username
+      rallly-container-tag      = var.rallly-container-tag
     }))
   }
 }
