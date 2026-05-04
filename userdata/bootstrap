@@ -8,7 +8,7 @@ yum update -y
 /usr/libexec/oci-growfs --yes
 dnf config-manager --enable ol10_developer
 dnf install podman python3-pip python-oci-cli acl -y
-dnf install dnf-plugins-core
+dnf install dnf-plugins-core -y
 dnf copr enable @caddy/caddy -y
 while fuser /usr/lib/sysimage/rpm/.rpm.lock >/dev/null 2>&1; do
   echo "Waiting for RPM database lock..."
@@ -106,3 +106,10 @@ systemctl start caddy
 systemctl enable caddy
 mkdir -p /etc/systemd/system/caddy.service.d/
 echo "Requires=network-online.target mnt-data.mount" >/etc/systemd/system/caddy.service.d/override.conf
+dnf install dnf-automatic -y
+sed -i -E \
+  -e 's/^(download_updates[[:space:]]*=).*/\1 yes/' \
+  -e 's/^(apply_updates[[:space:]]*=).*/\1 yes/' \
+  -e 's/^(reboot[[:space:]]*=).*/\1 when-changed/' \
+  /etc/dnf/automatic.conf
+systemctl enable --now dnf-automatic.timer
