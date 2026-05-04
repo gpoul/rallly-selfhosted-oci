@@ -10,4 +10,4 @@ rallly_smtp_credential_username = "<username>"
 # If the SMTP credential includes a $ make sure to escape it in the secret \$ - totally docker compose's fault (env-file)
 rallly_smtp_credential_secret_ocid = "<secret_ocid>"
 initial_admin_email = "admin@example.com"
-rallly-container-tag = "4.9.2"
+rallly-container-tag = "4.10.0"

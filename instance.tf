@@ -112,7 +112,7 @@ resource "oci_core_instance" "rallly_instance" {
     display_name              = "Primaryvnic"
     assign_public_ip          = true
     assign_private_dns_record = true
-    hostname_label            = "exampleinstance"
+    hostname_label            = "rallly-${random_pet.server.id}"
     nsg_ids                   = [oci_core_network_security_group.web-sg.id]
   }
 
