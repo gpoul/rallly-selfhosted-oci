@@ -18,3 +18,4 @@ This repository contains a terraform template to deploy [Rallly](https://rallly.
 - In direct Terraform usage, `ad_name` may be omitted and the configuration falls back to `data.oci_identity_availability_domain.ad`.
 - The SPF DNS record is derived automatically for OCI commercial regions based on `region`.
 - Rallly and Postgres container logs are written to `/var/log/rallly` on the boot volume and ingested into OCI Logging through the Custom Logs Monitoring plugin.
+- Rallly's `SECRET_PASSWORD` is stored on the attached data volume at `/mnt/data/rallly-secrets/secret_password` so session encryption survives instance rebuilds.

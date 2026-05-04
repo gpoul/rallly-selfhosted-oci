@@ -38,8 +38,6 @@ SMTP_HOST=${smtp_host}
 SMTP_PORT=465
 SMTP_USER=${smtp_user}
 END_CONFIG
-SECRET_PASSWORD=`openssl rand -base64 32`
-echo SECRET_PASSWORD=$SECRET_PASSWORD >>/home/opc/rallly-selfhosted/config.env
 SMTP_PWD=`oci secrets secret-bundle get \
     --raw-output \
     --auth instance_principal \
@@ -67,6 +65,15 @@ if [ ! -d /mnt/data/caddy ]; then
 fi
 chown opc:opc -R /mnt/data
 chown caddy:caddy -R /mnt/data/caddy
+install -d -o root -g root -m 0700 /mnt/data/rallly-secrets
+SECRET_PASSWORD_FILE=/mnt/data/rallly-secrets/secret_password
+if [ ! -f "$SECRET_PASSWORD_FILE" ]; then
+  openssl rand -base64 32 >"$SECRET_PASSWORD_FILE"
+fi
+chown root:root "$SECRET_PASSWORD_FILE"
+chmod 0600 "$SECRET_PASSWORD_FILE"
+SECRET_PASSWORD=$(cat "$SECRET_PASSWORD_FILE")
+printf 'SECRET_PASSWORD=%s\n' "$SECRET_PASSWORD" >>/home/opc/rallly-selfhosted/config.env
 install -d -o opc -g opc -m 0755 /var/log/rallly
 touch /var/log/rallly/rallly.log /var/log/rallly/postgres.log
 chown opc:opc /var/log/rallly/rallly.log /var/log/rallly/postgres.log
